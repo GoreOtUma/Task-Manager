@@ -15,8 +15,14 @@ const AddTask: React.FC<AddTaskProps> = ({ onAdd }) => {
 
     // Функция для добавления задачи
     const handleAdd = () => {
+        const currentDate = new Date().toISOString().split("T")[0];
         // Валидация: проверяем, что длина title не меньше 3 символов
         if (title.length >= 3) {
+            if (dueDate && dueDate < currentDate) {
+                alert("Due date must not be earlier than today.");
+                return;
+            }
+
             const newTask: Task = {
                 id: Date.now(),
                 title,
@@ -42,6 +48,7 @@ const AddTask: React.FC<AddTaskProps> = ({ onAdd }) => {
         setPriority("low");
         setTags([]);
     };
+    
 
     return (
         <div>

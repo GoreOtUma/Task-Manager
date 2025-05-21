@@ -22,8 +22,26 @@ const App: React.FC = () => {
         setTasks(storedTasks);
     }, []);
 
+    // Обновление статуса задачи
+    const handleToggleCompleted = (taskId: number) => {
+        const updatedTasks = tasks.map((task) =>
+            task.id === taskId ? { ...task, completed: !task.completed } : task
+        );
+        setTasks(updatedTasks);
+        saveTasks(updatedTasks);
+    };
+
     // Функция для фильтрации задач
     const filteredTasks = tasks.filter((task) => {
+      if (filters.status !== "all" && (filters.status === "completed" && !task.completed || filters.status === "incomplete" && task.completed)) {
+            return false;
+        }
+        if (filters.priority !== "all" && task.priority !== filters.priority) {
+            return false;
+        }
+        if (filters.search && !task.title.toLowerCase().includes(filters.search.toLowerCase())) {
+            return false;
+        }
 if (filters.dueDate !== "all") {
     const taskDueDate = new Date(task.dueDate); // Преобразуем строку в объект Date
     const today = new Date();
@@ -107,6 +125,19 @@ if (filters.dueDate !== "all") {
         }));
     }, 300);
 
+    // Пример добавления сохранения фильтров в localStorage
+useEffect(() => {
+    const savedFilters = localStorage.getItem("filters");
+    if (savedFilters) {
+        setFilters(JSON.parse(savedFilters));
+    }
+}, []);
+
+useEffect(() => {
+    localStorage.setItem("filters", JSON.stringify(filters));
+}, [filters]);
+
+
     return (
         <div>
             <h1>Task Manager</h1>
@@ -114,7 +145,7 @@ if (filters.dueDate !== "all") {
 
             {/* Фильтры */}
             <div>
-                <select onChange={(e) => handleFilterChange("status", e.target.value)} value={filters.status}>
+                <select onChange={(e) => handleFilterChange("status", e.target.value)} value={filters.status} style={{ backgroundColor: filters.status !== 'all' ? '#d3f9d8' : 'transparent' }}>
                     <option value="all">All</option>
                     <option value="completed">Completed</option>
                     <option value="incomplete">Incomplete</option>
@@ -140,7 +171,6 @@ if (filters.dueDate !== "all") {
                 />
             </div>
 
-            {/* Форма редактирования задачи */}
             {editingTask && (
                 <div>
                     <h2>Edit Task</h2>
@@ -149,6 +179,23 @@ if (filters.dueDate !== "all") {
                         value={editingTask.title}
                         onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
                     />
+                    <textarea
+                        value={editingTask.description}
+                        onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                    />
+                    <input
+                        type="date"
+                        value={editingTask.dueDate}
+                        onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })}
+                    />
+                    <select
+                        value={editingTask.priority}
+                        onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as "low" | "medium" | "high" })}
+                    >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
                     <button onClick={() => handleSaveTask(editingTask)}>Save</button>
                     <button onClick={() => setEditingTask(null)}>Cancel</button>
                 </div>
@@ -159,6 +206,7 @@ if (filters.dueDate !== "all") {
                 tasks={filteredTasks}
                 onEdit={handleEditTask}
                 onDelete={handleDeleteTask}
+                onToggleCompleted={handleToggleCompleted}
             />
         </div>
     );
