@@ -1,43 +1,3 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Общие стили */
 * {
     margin: 0;
     padding: 0;
@@ -59,7 +19,6 @@ h1 {
     margin-bottom: 40px;
 }
 
-/* Контейнер для всех элементов приложения */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -69,7 +28,6 @@ h1 {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Кнопки */
 button {
     background-color: sandybrown;
     color: black;
@@ -80,23 +38,17 @@ button {
     transition: background-color 0.3s;
 }
 
-button:hover {
-    background-color: #2980b9;
-}
-
 button:disabled {
     background-color: #95a5a6;
     cursor: not-allowed;
 }
 
-/* Картинка загрузки или сообщения об отсутствии задач */
 .no-tasks {
     text-align: center;
     font-size: 1.2rem;
     color: #95a5a6;
 }
 
-/* Респонсив */
 @media screen and (max-width: 768px) {
     .container {
         padding: 10px;
@@ -107,18 +59,6 @@ button:disabled {
     }
 }
 
-/* Контейнер для фильтров */
-.filters-container {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 30px;
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Фильтры */
 select,
 input[type="text"] {
     padding: 8px 12px;
@@ -127,27 +67,10 @@ input[type="text"] {
     font-size: 1rem;
 }
 
-select:focus,
-input[type="text"]:focus {
-    border-color: sandybrown;
-}
-
-/* Подсветка активных фильтров */
-select:focus,
-input[type="text"]:focus {
-    background-color: sandybrown;
-}
-
-/* Заголовок фильтров */
 .filters-container select {
     width: 22%;
 }
 
-.filters-container input[type="text"] {
-    width: 35%;
-}
-
-/* Стили для модального окна */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -201,12 +124,7 @@ input[type="text"]:focus {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #666;
   padding: 0 8px;
-}
-
-.modal-close-button:hover {
-  color: #333;
 }
 
 .modal-body {
@@ -221,7 +139,6 @@ input[type="text"]:focus {
   gap: 10px;
 }
 
-/* Стили для формы */
 .form-group {
   margin-bottom: 16px;
 }
@@ -230,7 +147,6 @@ input[type="text"]:focus {
   display: block;
   margin-bottom: 6px;
   font-weight: 500;
-  color: #333;
 }
 
 .form-input, .form-textarea, .form-select {
@@ -243,8 +159,7 @@ input[type="text"]:focus {
 
 .form-input:focus, .form-textarea:focus, .form-select:focus {
   outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  border-color: chocolate;
 }
 
 .form-textarea {
@@ -252,7 +167,6 @@ input[type="text"]:focus {
   min-height: 80px;
 }
 
-/* Кнопки */
 .btn {
   padding: 8px 16px;
   border-radius: 4px;
@@ -262,18 +176,17 @@ input[type="text"]:focus {
 }
 
 .btn-primary {
-  background-color: #4a90e2;
+  background-color: chocolate;
   color: white;
   border: none;
 }
 
 .btn-primary:hover {
-  background-color: #3a7bc8;
+  background-color: rgb(220, 105, 10);
 }
 
 .btn-secondary {
   background-color: white;
-  color: #333;
   border: 1px solid #ddd;
 }
 
@@ -316,10 +229,8 @@ input[type="text"]:focus {
   margin: 25px 0;
   flex-wrap: wrap;
   align-items: center;
-  background: #f8f9fa;
   padding: 15px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .filter-select, .group-select {
@@ -334,25 +245,16 @@ input[type="text"]:focus {
   min-width: 150px;
 }
 
-.filter-select:hover, .group-select:hover {
-  border-color: #4a90e2;
-}
-
 .filter-select:focus, .group-select:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
 }
 
 .filter-select.active-filter {
-  background-color: #e3f2fd;
-  border-color: chocolate;
+  background-color: sandybrown;
+  border-color: sandybrown;
   color: #2c3e50;
   font-weight: 500;
-}
-
-.group-select {
-  background-color: #f0f4f8;
-  border: 1px dashed #a0aec0;
 }
 
 .search-input {

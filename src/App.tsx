@@ -4,8 +4,9 @@ import { RootState, AppDispatch } from './store';
 import { Task } from './core/taskManager';
 import AddTask from './ui/AddTask';
 import TaskList from './ui/TaskList';
-import { debounce } from 'lodash';
+import { createDebouncedFunc, getToday, getStartOfWeek, getEndOfWeek, getStartOfMonth, isSameDay, validateTask } from './utils';
 import './App.css';
+
 import {
   addTask,
   editTask,
@@ -39,34 +40,25 @@ const App: React.FC = () => {
     }
     
     if (filters.dueDate !== "all") {
-      const taskDueDate = new Date(task.dueDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay());
-
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-      if (filters.dueDate === "today" && taskDueDate.toDateString() !== today.toDateString()) {
-        return false;
-      }
-
-      if (filters.dueDate === "this-week" && (taskDueDate < startOfWeek || taskDueDate > endOfWeek)) {
-        return false;
-      }
-
-      if (filters.dueDate === "this-month" && (taskDueDate < startOfMonth || taskDueDate > today)) {
-        return false;
-      }
-
-      if (filters.dueDate === "overdue" && taskDueDate >= today) {
-        return false;
-      }
+    const taskDueDate = new Date(task.dueDate);
+    const today = getToday(); // Используем утилиту
+    
+    if (filters.dueDate === "today") {
+      if (!isSameDay(taskDueDate, today)) return false;
     }
+    else if (filters.dueDate === "this-week") {
+      const startOfWeek = getStartOfWeek(today);
+      const endOfWeek = getEndOfWeek(startOfWeek);
+      if (taskDueDate < startOfWeek || taskDueDate > endOfWeek) return false;
+    }
+    else if (filters.dueDate === "this-month") {
+      const startOfMonth = getStartOfMonth(today);
+      if (taskDueDate < startOfMonth || taskDueDate > today) return false;
+    }
+    else if (filters.dueDate === "overdue") {
+      if (taskDueDate >= today) return false;
+    }
+  }
     
     if (filters.tags && !task.tags.some((tag: string) => 
       tag.toLowerCase().includes(filters.tags.toLowerCase()))
@@ -100,9 +92,20 @@ const App: React.FC = () => {
   };
 
   // debounce для поиска
-  const handleSearchChange = debounce((value: string) => {
+  const handleSearchChange = createDebouncedFunc((value: string) => {
     dispatch(setFilter({ type: 'search', value }));
   }, 300);
+  
+  const handleSave = () => {
+    if (!editingTask) return;
+    
+    const errors = validateTask(editingTask);
+    if (errors.length > 0) {
+      alert(errors.join('\n'));
+      return;
+    }
+    dispatch(saveTask(editingTask));
+  };
 
   return (
     <div className="task-manager-container">
@@ -225,7 +228,7 @@ const App: React.FC = () => {
                 
                 <div className="modal-footer">
                     <button 
-                    onClick={() => dispatch(saveTask(editingTask))}
+                    onClick={handleSave}
                     className="btn btn-primary"
                     >
                     Сохранить
