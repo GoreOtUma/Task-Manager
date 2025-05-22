@@ -121,7 +121,7 @@ const App: React.FC = () => {
         >
           <option value="all">—</option>
           <option value="completed">Завершенные</option>
-          <option value="incomplete">В процессе</option>
+          <option value="incomplete">Активные</option>
         </select>
         
         <select
