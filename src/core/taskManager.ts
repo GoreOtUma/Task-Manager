@@ -1,21 +1,19 @@
-// src/core/taskManager.ts
-
 export interface Task {
     id: number;
     title: string;
     description: string;
     completed: boolean;
     dueDate: string;
-    priority: "low" | "medium" | "high";  // Убедитесь, что priority строго типизировано
+    priority: "low" | "medium" | "high";  
     tags: string[];
 }
 
-// Функция создания задачи
+// Создание задачи
 export const createTask = (
     title: string,
     description: string,
     dueDate: string,
-    priority: "low" | "medium" | "high",  // Убедитесь, что приоритет передается с корректным типом
+    priority: "low" | "medium" | "high",  
     tags: string[]
 ): Task => {
     return {
@@ -24,12 +22,12 @@ export const createTask = (
         description,
         completed: false,
         dueDate,
-        priority,  // Приоритет здесь должен быть строго одного из значений
+        priority,  
         tags,
     };
 };
 
-// Пример редактирования задачи
+// Редактирование задачи
 export const editTask = (
     taskId: number,
     updatedTask: Task,
@@ -40,12 +38,12 @@ export const editTask = (
     );
 };
 
-// Пример удаления задачи
+// Удаление задачи
 export const deleteTask = (taskId: number, tasks: Task[]): Task[] => {
     return tasks.filter((task) => task.id !== taskId);
 };
 
-// Пример изменения статуса выполнения
+// Изменение статуса выполнения
 export const toggleTaskCompletion = (taskId: number, tasks: Task[]): Task[] => {
     return tasks.map((task) =>
         task.id === taskId ? { ...task, completed: !task.completed } : task

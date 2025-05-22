@@ -1,215 +1,260 @@
-// src/ui/App.tsx
-import React, { useState, useEffect } from "react";
-import { Task } from "../src/core/taskManager";
-import { loadTasks, saveTasks } from "../src/storage/storage";
-import AddTask from "../src/ui/AddTask";
-import TaskList from "../src/ui/TaskList";
-import { debounce } from "lodash";
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from './store';
+import { Task } from './core/taskManager';
+import AddTask from './ui/AddTask';
+import TaskList from './ui/TaskList';
+import { debounce } from 'lodash';
+import './App.css';
+import {
+  addTask,
+  editTask,
+  saveTask,
+  deleteTask,
+  toggleCompleted,
+  cancelEditing,
+} from './store/tasksSlice';
+import { setFilter, setGroupBy } from "./store/filterSlice";
 
 const App: React.FC = () => {
-    const [tasks, setTasks] = useState<Task[]>([]);
-    const [editingTask, setEditingTask] = useState<Task | null>(null);
-    const [filters, setFilters] = useState({
-        status: "all",
-        priority: "all",
-        search: "",
-        dueDate: "all",
-    });
+  const dispatch = useDispatch<AppDispatch>();
+  const { tasks, editingTask } = useSelector((state: RootState) => state.tasks);
+  const filters = useSelector((state: RootState) => state.filters);
 
-    // Загрузка задач из localStorage при монтировании компонента
-    useEffect(() => {
-        const storedTasks = loadTasks();
-        setTasks(storedTasks);
-    }, []);
+  // Функция для фильтрации задач
+  const filteredTasks = tasks.filter((task) => {
+    if (filters.status !== "all" && (
+      (filters.status === "completed" && !task.completed) || 
+      (filters.status === "incomplete" && task.completed)
+    )) {
+      return false;
+    }
+    
+    if (filters.priority !== "all" && task.priority !== filters.priority) {
+      return false;
+    }
+    
+    if (filters.search && !task.title.toLowerCase().includes(filters.search.toLowerCase())) {
+      return false;
+    }
+    
+    if (filters.dueDate !== "all") {
+      const taskDueDate = new Date(task.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    // Обновление статуса задачи
-    const handleToggleCompleted = (taskId: number) => {
-        const updatedTasks = tasks.map((task) =>
-            task.id === taskId ? { ...task, completed: !task.completed } : task
-        );
-        setTasks(updatedTasks);
-        saveTasks(updatedTasks);
-    };
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
 
-    // Функция для фильтрации задач
-    const filteredTasks = tasks.filter((task) => {
-      if (filters.status !== "all" && (filters.status === "completed" && !task.completed || filters.status === "incomplete" && task.completed)) {
-            return false;
-        }
-        if (filters.priority !== "all" && task.priority !== filters.priority) {
-            return false;
-        }
-        if (filters.search && !task.title.toLowerCase().includes(filters.search.toLowerCase())) {
-            return false;
-        }
-if (filters.dueDate !== "all") {
-    const taskDueDate = new Date(task.dueDate); // Преобразуем строку в объект Date
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Очищаем время для корректного сравнения с датами
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
 
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay()); // Начало текущей недели (понедельник)
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6); // Конец текущей недели (воскресенье)
-
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // Начало текущего месяца
-
-    // Фильтр "Сегодня"
-    if (filters.dueDate === "today" && taskDueDate.toDateString() !== today.toDateString()) {
+      if (filters.dueDate === "today" && taskDueDate.toDateString() !== today.toDateString()) {
         return false;
-    }
+      }
 
-    // Фильтр "Эта неделя"
-    if (filters.dueDate === "this-week" && (taskDueDate < startOfWeek || taskDueDate > endOfWeek)) {
+      if (filters.dueDate === "this-week" && (taskDueDate < startOfWeek || taskDueDate > endOfWeek)) {
         return false;
-    }
+      }
 
-    // Фильтр "Этот месяц"
-    if (filters.dueDate === "this-month" && (taskDueDate < startOfMonth || taskDueDate > today)) {
+      if (filters.dueDate === "this-month" && (taskDueDate < startOfMonth || taskDueDate > today)) {
         return false;
-    }
+      }
 
-    // Фильтр "Просроченные"
-    if (filters.dueDate === "overdue" && taskDueDate >= today) {
+      if (filters.dueDate === "overdue" && taskDueDate >= today) {
         return false;
+      }
     }
-}
-
-
-        return true;
-    });
-
-    // Функции для обновления фильтров
-    const handleFilterChange = (filterType: string, value: string) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [filterType]: value,
-        }));
-    };
-
-    // Функция для добавления новой задачи
-    const handleAddTask = (newTask: Task) => {
-        const updatedTasks = [...tasks, newTask];
-        setTasks(updatedTasks);
-        saveTasks(updatedTasks); // Сохраняем задачи в localStorage
-    };
-
-    // Функция для редактирования задачи
-    const handleEditTask = (task: Task) => {
-        setEditingTask(task);
-    };
-
-    // Функция для сохранения отредактированной задачи
-    const handleSaveTask = (updatedTask: Task) => {
-        const updatedTasks = tasks.map((task) =>
-            task.id === updatedTask.id ? updatedTask : task
-        );
-        setTasks(updatedTasks);
-        saveTasks(updatedTasks); // Сохраняем обновленные задачи в localStorage
-        setEditingTask(null); // Сброс редактирования
-    };
-
-    // Функция для удаления задачи
-    const handleDeleteTask = (taskId: number) => {
-        const updatedTasks = tasks.filter((task) => task.id !== taskId);
-        setTasks(updatedTasks);
-        saveTasks(updatedTasks); // Сохраняем обновленные задачи в localStorage
-    };
-
-    // debounce для поиска
-    const handleSearchChange = debounce((value: string) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            search: value,
-        }));
-    }, 300);
-
-    // Пример добавления сохранения фильтров в localStorage
-useEffect(() => {
-    const savedFilters = localStorage.getItem("filters");
-    if (savedFilters) {
-        setFilters(JSON.parse(savedFilters));
+    
+    if (filters.tags && !task.tags.some((tag: string) => 
+      tag.toLowerCase().includes(filters.tags.toLowerCase()))
+    ) {
+      return false;
     }
-}, []);
 
-useEffect(() => {
-    localStorage.setItem("filters", JSON.stringify(filters));
-}, [filters]);
+    return true;
+  });
 
+  // Функция для группировки задач
+  const groupTasks = () => {
+    if (filters.groupBy === "priority") {
+      const priorities = ["high", "medium", "low"] as const;
+      return priorities.map((p) => ({
+        group: p,
+        tasks: filteredTasks.filter((task) => task.priority === p),
+      }));
+    } else if (filters.groupBy === "tag") {
+      const tagMap: Record<string, Task[]> = {};
+      filteredTasks.forEach((task) => {
+        task.tags.forEach((tag: string) => {
+          if (!tagMap[tag]) tagMap[tag] = [];
+          tagMap[tag].push(task);
+        });
+      });
+      return Object.entries(tagMap).map(([tag, tasks]) => ({ group: tag, tasks }));
+    } else {
+      return [{ group: "All Tasks", tasks: filteredTasks }];
+    }
+  };
 
-    return (
-        <div>
-            <h1>Task Manager</h1>
-            <AddTask onAdd={handleAddTask} />
+  // debounce для поиска
+  const handleSearchChange = debounce((value: string) => {
+    dispatch(setFilter({ type: 'search', value }));
+  }, 300);
 
-            {/* Фильтры */}
-            <div>
-                <select onChange={(e) => handleFilterChange("status", e.target.value)} value={filters.status} style={{ backgroundColor: filters.status !== 'all' ? '#d3f9d8' : 'transparent' }}>
-                    <option value="all">All</option>
-                    <option value="completed">Completed</option>
-                    <option value="incomplete">Incomplete</option>
-                </select>
-                <select onChange={(e) => handleFilterChange("priority", e.target.value)} value={filters.priority}>
-                    <option value="all">All</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                </select>
-                <select onChange={(e) => handleFilterChange("dueDate", e.target.value)} value={filters.dueDate}>
-                    <option value="all">All</option>
-                    <option value="today">Today</option>
-                    <option value="this-week">This Week</option>
-                    <option value="this-month">This Month</option>
-                    <option value="overdue">Overdue</option>
-                </select>
-                <input
-                    type="text"
-                    placeholder="Search tasks"
-                    onChange={(e) => handleSearchChange(e.target.value)} // Добавили debounce
-                    value={filters.search}
-                />
-            </div>
+  return (
+    <div className="task-manager-container">
+      <h1 className="app-title">Task Manager</h1>
+      
+      <AddTask onAdd={(task) => dispatch(addTask(task))} />
+      
+      <div className="filters-container">
+        <select
+          onChange={(e) => dispatch(setFilter({ type: 'status', value: e.target.value }))}
+          value={filters.status}
+          className={`filter-select ${filters.status !== 'all' ? 'active-filter' : ''}`}
+        >
+          <option value="all">—</option>
+          <option value="completed">Завершенные</option>
+          <option value="incomplete">В процессе</option>
+        </select>
+        
+        <select
+          onChange={(e) => dispatch(setFilter({ type: 'priority', value: e.target.value }))}
+          value={filters.priority}
+          className={`filter-select ${filters.priority !== 'all' ? 'active-filter' : ''}`}
+        >
+          <option value="all">—</option>
+          <option value="low">Низкий</option>
+          <option value="medium">Средний</option>
+          <option value="high">Высокий</option>
+        </select>
+        
+        <select
+          onChange={(e) => dispatch(setFilter({ type: 'dueDate', value: e.target.value }))}
+          value={filters.dueDate}
+          className={`filter-select ${filters.dueDate !== 'all' ? 'active-filter' : ''}`}
+        >
+          <option value="all">—</option>
+          <option value="today">Сегодня</option>
+          <option value="this-week">На этой неделе</option>
+          <option value="this-month">В этом месяце</option>
+          <option value="overdue">Просроченные</option>
+        </select>
+        
+        <select
+          value={filters.groupBy}
+          onChange={(e) => dispatch(setGroupBy(e.target.value as 'none' | 'priority' | 'tag'))}
+          className="group-select"
+        >
+          <option value="none"></option>
+          <option value="priority">Группировать по приоритету</option>
+          <option value="tag">Группировать по тегам</option>
+        </select>
 
-            {editingTask && (
-                <div>
-                    <h2>Edit Task</h2>
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          onChange={(e) => handleSearchChange(e.target.value)}
+          value={filters.search}
+          className="search-input"
+        />
+      </div>
+        {editingTask && (
+            <div className="modal-overlay">
+                <div className="modal-content">
+                <div className="modal-header">
+                    <h2>Редактирование задачи</h2>
+                    <button 
+                    onClick={() => dispatch(cancelEditing())}
+                    className="modal-close-button"
+                    >
+                    &times;
+                    </button>
+                </div>
+                
+                <div className="modal-body">
+                    <div className="form-group">
+                    <label>Название:</label>
                     <input
                         type="text"
                         value={editingTask.title}
-                        onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
+                        onChange={(e) => dispatch(editTask({ ...editingTask, title: e.target.value }))}
+                        className="form-input"
                     />
+                    </div>
+                    
+                    <div className="form-group">
+                    <label>Описание:</label>
                     <textarea
                         value={editingTask.description}
-                        onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                        onChange={(e) => dispatch(editTask({ ...editingTask, description: e.target.value }))}
+                        className="form-textarea"
+                        rows={4}
                     />
+                    </div>
+                    
+                    <div className="form-group">
+                    <label>Срок выполнения:</label>
                     <input
                         type="date"
                         value={editingTask.dueDate}
-                        onChange={(e) => setEditingTask({ ...editingTask, dueDate: e.target.value })}
+                        onChange={(e) => dispatch(editTask({ ...editingTask, dueDate: e.target.value }))}
+                        className="form-input"
                     />
+                    </div>
+                    
+                    <div className="form-group">
+                    <label>Приоритет:</label>
                     <select
                         value={editingTask.priority}
-                        onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value as "low" | "medium" | "high" })}
+                        onChange={(e) => dispatch(editTask({ 
+                        ...editingTask, 
+                        priority: e.target.value as "low" | "medium" | "high" 
+                        }))}
+                        className="form-select"
                     >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
+                        <option value="low">Низкий</option>
+                        <option value="medium">Средний</option>
+                        <option value="high">Высокий</option>
                     </select>
-                    <button onClick={() => handleSaveTask(editingTask)}>Save</button>
-                    <button onClick={() => setEditingTask(null)}>Cancel</button>
+                    </div>
                 </div>
-            )}
-
-            {/* Список задач */}
+                
+                <div className="modal-footer">
+                    <button 
+                    onClick={() => dispatch(saveTask(editingTask))}
+                    className="btn btn-primary"
+                    >
+                    Сохранить
+                    </button>
+                    <button 
+                    onClick={() => dispatch(cancelEditing())}
+                    className="btn btn-secondary"
+                    >
+                    Отменить
+                    </button>
+                </div>
+                </div>
+            </div>
+        )}
+      <div className="task-groups">
+        {groupTasks().map(({ group, tasks }) => (
+          <div key={group} className="task-group">
+            <h2 className="group-title">{group.toUpperCase()}</h2>
             <TaskList
-                tasks={filteredTasks}
-                onEdit={handleEditTask}
-                onDelete={handleDeleteTask}
-                onToggleCompleted={handleToggleCompleted}
+              tasks={tasks}
+              onEdit={(task) => dispatch(editTask(task))}
+              onDelete={(id) => dispatch(deleteTask(id))}
+              onToggleCompleted={(id) => dispatch(toggleCompleted(id))}
             />
-        </div>
-    );
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default App;

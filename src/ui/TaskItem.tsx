@@ -1,4 +1,3 @@
-// src/ui/TaskItem.tsx
 import React from "react";
 import { Task } from "../core/taskManager";
 
@@ -15,8 +14,6 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onDelete, onToggleComplete, o
             <div style={{ textDecoration: task.completed ? "line-through" : "none" }} onClick={() => onToggleComplete(task.id)}>
                 {task.title}
             </div>
-            <button onClick={() => onEdit(task)}>Edit</button>
-            <button onClick={() => onDelete(task.id)}>Delete</button>
         </div>
     );
 };

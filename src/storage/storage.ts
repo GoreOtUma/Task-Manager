@@ -1,5 +1,3 @@
-// src/storage/storage.ts
-
 import { Task } from "../core/taskManager";
 
 // Функция для загрузки задач из localStorage
